@@ -12,7 +12,7 @@ export default {
     TradeView
   },
   mounted() {
-    this.$refs.trade.init('BTCUSDT', 5)
+    this.$refs.trade.init('BTCUSDT', 1)
   }
 }
 </script>

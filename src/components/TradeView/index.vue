@@ -11,7 +11,7 @@ export default {
   data() {
     return {
       widget: null,
-      socket: new socket(),
+      socket: new socket("ws:127.0.0.1:8081/v2/ws"),
       datafeeds: new datafeeds(this),
       symbol: null,
       interval: null,
@@ -29,7 +29,8 @@ export default {
     this.socket.on('message', this.onMessage)
   },
   methods: {
-    init(symbol = 'BTCUSDT', interval = 5) {
+    init(symbol = 'BTCUSDT', interval = 1) {
+      console.log("===>", interval)
       if (!this.widget) {
         this.widget = new TvWidget({
           symbol: symbol,
@@ -77,42 +78,45 @@ export default {
     },
     onMessage(data) {
       // console.log(data)
-      if (data.data && data.data.length) {
+      if (data.data) {
         const list = []
         const ticker = `${this.symbol}-${this.interval}`
-        data.data.forEach(function (element) {
-          list.push({
-            time: this.interval !== 'D' || this.interval !== '1D' ? element.id * 1000 : element.id,
-            open: element.open,
-            high: element.high,
-            low: element.low,
-            close: element.close,
-            volume: element.quote_vol
-          })
-        }, this)
+        if(data.data.length){
+          data.data.forEach(function (element) {
+            console.log("---->", element)
+            list.push({
+              time: element.id,
+              open: element.open,
+              high: element.high,
+              low: element.low,
+              close: element.close,
+              volume: element.quote_vol
+            })
+          }, this)
+          this.lastTime = list[list.length - 1].time
+        }
         this.cacheData[ticker] = list
-        this.lastTime = list[list.length - 1].time
         this.subscribe()
       }
       if (data.type && data.type.indexOf(this.symbol.toLowerCase()) !== -1) {
-        // console.log(' >> sub:', data.type)
+        console.log(' >> sub:', data)
         this.datafeeds.barsUpdater.updateData()
         const ticker = `${this.symbol}-${this.interval}`
         const barsData = {
-          time: data.id * 1000,
+          time: data.id,
           open: data.open,
           high: data.high,
           low: data.low,
           close: data.close,
           volume: data.quote_vol
         }
-        if (barsData.time >= this.lastTime && this.cacheData[ticker] && this.cacheData[ticker].length) {
-          this.cacheData[ticker][this.cacheData[ticker].length - 1] = barsData
+        if (barsData.time >= this.lastTime && this.cacheData[ticker]) {
+          this.cacheData[ticker][this.cacheData[ticker].length] = barsData
         }
       }
     },
     getBars(symbolInfo, resolution, rangeStartDate, rangeEndDate, onLoadedCallback) {
-      // console.log(' >> :', rangeStartDate, rangeEndDate)
+      console.log(' >> :', rangeStartDate, rangeEndDate)
       if (this.interval !== resolution) {
         this.unSubscribe(this.interval)
         this.interval = resolution
@@ -125,10 +129,11 @@ export default {
         }
       }
       const ticker = `${this.symbol}-${this.interval}`
-      if (this.cacheData[ticker] && this.cacheData[ticker].length) {
+      if (this.cacheData[ticker] && this.cacheData[ticker].length>=0) {
         this.isLoading = false
         const newBars = []
         this.cacheData[ticker].forEach(item => {
+          console.log("//////////////", item)
           if (item.time >= rangeStartDate * 1000 && item.time <= rangeEndDate * 1000) {
             newBars.push(item)
           }

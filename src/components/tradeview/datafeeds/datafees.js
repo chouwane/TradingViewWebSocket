@@ -52,12 +52,17 @@ class datafeeds {
    * @param {*Function} onErrorCallback  回调函数
    */
   getBars(symbolInfo, resolution, rangeStartDate, rangeEndDate, onDataCallback, onErrorCallback) {
+    
     const onLoadedCallback = data => {
       data && data.length ? onDataCallback(data, { noData: true }) : onDataCallback([], { noData: true })
     }
     this.self.getBars(symbolInfo, resolution, rangeStartDate, rangeEndDate, onLoadedCallback)
+    
+    //onDataCallback([], { noData: true });
   }
 
+
+  
   /**
    * 订阅K线数据。图表库将调用onRealtimeCallback方法以更新实时数据
    * @param {*Object} symbolInfo 商品信息
@@ -107,7 +112,7 @@ class datafeeds {
       'has_intraday': true,
       'has_no_volume': false,
       'description': 'BTCUSDT',
-      'pricescale': 1,
+      'pricescale': 100,
       'ticker': 'BTCUSDT',
       'supported_resolutions': ['1', '5', '15', '30', '60', '1D', '2D', '3D', '1W', '1M']
     }
